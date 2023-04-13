@@ -93,7 +93,7 @@ def ret2libc_without_pie(program,libc_so, active_process, padding,cookie_index, 
 # (^ related to this: it is important to know that this is just a template input may be taken else where for format string exploitation)
 
 # debugger=False by default if you want GDB attached then make it True
-def ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func,active_process, binary, padding,cookie_index,stack_cookie=False, debugger=False):
+def ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func,active_process, padding,cookie_index,stack_cookie=False, debugger=False):
 	# REMEMBER THAT THIS IS A TEMPLATE AND THAT THIS WONT BE A 1 WAY SOLVE ALL YOU NEED TO ADJUST ACCORDINGLY
 	# TO HOW THE PROGRAM INTERACTS WITH STDIN, WHERE THE INPUT IS FOR FORMAT STRING EXPLOITATION, ETC.
 	if debugger is True:
