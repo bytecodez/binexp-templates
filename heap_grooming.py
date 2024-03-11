@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from pwn import *
-from time import sleep
 
 elf = context.binary = ELF("deathnote", checksec=True)
 libc = elf.libc
