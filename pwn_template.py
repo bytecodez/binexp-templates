@@ -13,7 +13,7 @@ continue
 def start():
     if args.GDB:
         return gdb.debug(elf.path, gdbscript=gs)
-    elif args.REMOTE():
+    elif args.REMOTE:
       remote("1.1.1.1", 5555) 
     else:
         return process(elf.path)
